@@ -1,447 +1,185 @@
-
-"use client";
-
-import { useState } from "react";
-import {
-  LayoutDashboard, ClipboardList, ClipboardCheck,
-  BarChart3, Users, Search, Bell, Menu, X,
-  Plus, Clock3, CheckCircle2, AlertCircle,
-  Leaf, CalendarDays, MoreHorizontal
-} from "lucide-react";
-
-type Task = {
-  id: string;
-  title: string;
-  area: string;
-  owner: string;
-  status: string;
-};
-
-const initialTasks: Task[] = [
-  {
-    id: "7S-026",
-    title: "ทำความสะอาดห้องปฏิบัติการคอมพิวเตอร์",
-    area: "อาคาร 3 ห้อง 302",
-    owner: "แผนกเทคโนโลยีสารสนเทศ",
-    status: "รอตรวจ"
-  },
-  {
-    id: "7S-025",
-    title: "จัดระเบียบพื้นที่จัดเก็บอุปกรณ์",
-    area: "ห้องพัสดุ",
-    owner: "งานพัสดุ",
-    status: "กำลังดำเนินการ"
-  },
-  {
-    id: "7S-024",
-    title: "ตรวจสอบความสะอาดบริเวณทางเดิน",
-    area: "อาคาร 1 ชั้น 1",
-    owner: "งานอาคารสถานที่",
-    status: "อนุมัติแล้ว"
-  },
-  {
-    id: "7S-023",
-    title: "คัดแยกเอกสารที่ไม่จำเป็น",
-    area: "ห้องธุรการ",
-    owner: "งานธุรการ",
-    status: "ต้องแก้ไข"
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>เข้าสู่ระบบ | Clean Check</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #eef3f6;
+    --surface: #ffffff;
+    --primary: #1d6f8f;
+    --primary-dark: #15566f;
+    --ink: #1c2b33;
+    --muted: #6a7b85;
+    --line: #d5e0e6;
+    --danger: #c0392b;
+    --danger-bg: #fdecea;
   }
-];
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: "Noto Sans Thai", "Sarabun", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+  .screen {
+    width: 100%;
+    max-width: 420px;
+    min-height: 100%;
+    padding: 20px 16px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .brand { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: .04em; }
+  .hero {
+    background: var(--primary);
+    color: #fff;
+    border-radius: 14px;
+    padding: 22px 18px 20px;
+  }
+  .hero h1 { margin: 0 0 4px; font-size: 24px; line-height: 1.3; }
+  .hero p { margin: 0; font-size: 14px; opacity: .9; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px 16px 20px;
+  }
+  .field { margin-bottom: 14px; }
+  label { display: block; font-size: 14px; font-weight: 500; margin-bottom: 6px; }
+  .input-wrap { position: relative; }
+  input {
+    width: 100%;
+    font: inherit;
+    font-size: 16px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--line);
+    border-radius: 10px;
+    background: #fff;
+    color: var(--ink);
+  }
+  input:focus-visible { outline: 3px solid rgba(29,111,143,.28); border-color: var(--primary); }
+  input[aria-invalid="true"] { border-color: var(--danger); }
+  .toggle {
+    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+    border: 0; background: none; font: inherit; font-size: 13px;
+    color: var(--primary); padding: 8px 10px; cursor: pointer; border-radius: 8px;
+  }
+  .toggle:focus-visible { outline: 3px solid rgba(29,111,143,.28); }
+  .error {
+    display: none;
+    background: var(--danger-bg);
+    color: var(--danger);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+    margin-bottom: 14px;
+  }
+  .error.show { display: block; }
+  .submit {
+    width: 100%;
+    font: inherit; font-size: 16px; font-weight: 700;
+    color: #fff; background: var(--primary-dark);
+    border: 0; border-radius: 12px;
+    padding: 14px; cursor: pointer;
+  }
+  .submit:hover { background: #104659; }
+  .submit:focus-visible { outline: 3px solid rgba(29,111,143,.4); outline-offset: 2px; }
+  .submit:disabled { opacity: .6; cursor: progress; }
+  .help { text-align: center; font-size: 13px; color: var(--muted); margin-top: 14px; }
+</style>
+</head>
+<body>
+  <main class="screen">
+    <div class="brand">CLEAN CHECK</div>
 
-const menus = [
-  { name: "ภาพรวมระบบ", icon: LayoutDashboard },
-  { name: "จัดการงาน 7ส", icon: ClipboardList },
-  { name: "ตรวจสอบหลักฐาน", icon: ClipboardCheck },
-  { name: "รายงานผล", icon: BarChart3 },
-  { name: "จัดการผู้ใช้งาน", icon: Users }
-];
+    <section class="hero">
+      <h1>เข้าสู่ระบบ</h1>
+      <p>ตรวจความสะอาดประจำวัน</p>
+    </section>
 
-export default function Home() {
-  const [active, setActive] = useState("ภาพรวมระบบ");
-  const [tasks, setTasks] = useState(initialTasks);
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("ทั้งหมด");
-  const [mobileMenu, setMobileMenu] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [title, setTitle] = useState("");
-  const [area, setArea] = useState("");
+    <form class="card" id="loginForm" novalidate>
+      <div class="error" id="error" role="alert"></div>
 
-  const filteredTasks = tasks.filter(task => {
-    const matchSearch =
-      task.title.toLowerCase().includes(search.toLowerCase()) ||
-      task.area.toLowerCase().includes(search.toLowerCase());
+      <div class="field">
+        <label for="staffId">รหัสพนักงาน</label>
+        <input id="staffId" name="staffId" type="text" inputmode="text" autocomplete="username" required>
+      </div>
 
-    const matchFilter =
-      filter === "ทั้งหมด" || task.status === filter;
+      <div class="field">
+        <label for="password">รหัสผ่าน</label>
+        <div class="input-wrap">
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+          <button type="button" class="toggle" id="toggle" aria-label="แสดงรหัสผ่าน">แสดง</button>
+        </div>
+      </div>
 
-    return matchSearch && matchFilter;
+      <button type="submit" class="submit" id="submit">เข้าสู่ระบบ</button>
+      <p class="help">ลืมรหัสผ่าน? ติดต่อหัวหน้างาน</p>
+    </form>
+  </main>
+
+<script>
+  const form = document.getElementById('loginForm');
+  const staffId = document.getElementById('staffId');
+  const password = document.getElementById('password');
+  const errorBox = document.getElementById('error');
+  const submitBtn = document.getElementById('submit');
+  const toggle = document.getElementById('toggle');
+
+  toggle.addEventListener('click', () => {
+    const hidden = password.type === 'password';
+    password.type = hidden ? 'text' : 'password';
+    toggle.textContent = hidden ? 'ซ่อน' : 'แสดง';
+    toggle.setAttribute('aria-label', hidden ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน');
   });
 
-  const waiting = tasks.filter(t => t.status === "รอตรวจ").length;
-  const approved = tasks.filter(t => t.status === "อนุมัติแล้ว").length;
-  const revision = tasks.filter(t => t.status === "ต้องแก้ไข").length;
-
-  function addTask(e: React.FormEvent) {
-    e.preventDefault();
-
-    if (!title.trim() || !area.trim()) return;
-
-    setTasks([
-      {
-        id: "7S-" + String(Date.now()).slice(-4),
-        title,
-        area,
-        owner: "ยังไม่ได้มอบหมาย",
-        status: "กำลังดำเนินการ"
-      },
-      ...tasks
-    ]);
-
-    setTitle("");
-    setArea("");
-    setShowForm(false);
+  function showError(msg, field) {
+    errorBox.textContent = msg;
+    errorBox.classList.add('show');
+    staffId.removeAttribute('aria-invalid');
+    password.removeAttribute('aria-invalid');
+    if (field) { field.setAttribute('aria-invalid', 'true'); field.focus(); }
   }
 
-  return (
-    <main className="app">
+  // TODO: เปลี่ยนเป็นการเรียก API จริงของระบบ
+  async function login(id, pass) {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ staffId: id, password: pass })
+    });
+    if (!res.ok) throw new Error('invalid');
+    return res.json();
+  }
 
-      {mobileMenu && (
-        <button
-          className="overlay"
-          onClick={() => setMobileMenu(false)}
-        />
-      )}
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorBox.classList.remove('show');
 
-      <aside className={`sidebar ${mobileMenu ? "open" : ""}`}>
+    if (!staffId.value.trim()) return showError('กรอกรหัสพนักงาน', staffId);
+    if (!password.value) return showError('กรอกรหัสผ่าน', password);
 
-        <div className="brand">
-          <div className="brand-icon">
-            <Leaf size={25}/>
-          </div>
-
-          <div>
-            <h2>7S <span>SUPERVISOR</span></h2>
-            <small>ระบบจัดการงานความสะอาด</small>
-          </div>
-
-          <button
-            className="close-menu"
-            onClick={() => setMobileMenu(false)}
-          >
-            <X/>
-          </button>
-        </div>
-
-        <p className="menu-title">เมนูหลัก</p>
-
-        <nav>
-          {menus.map(item => {
-            const Icon = item.icon;
-
-            return (
-              <button
-                key={item.name}
-                className={`menu-item ${
-                  active === item.name ? "selected" : ""
-                }`}
-                onClick={() => {
-                  setActive(item.name);
-                  setMobileMenu(false);
-                }}
-              >
-                <Icon size={19}/>
-                {item.name}
-
-                {item.name === "ตรวจสอบหลักฐาน" && waiting > 0 && (
-                  <span className="menu-badge">{waiting}</span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="sidebar-bottom">
-          <div className="help-box">
-            <Leaf size={22}/>
-            <h4>พื้นที่สะอาด เริ่มต้นที่เรา</h4>
-            <p>ร่วมกันสร้างสภาพแวดล้อมที่ดีด้วยหลัก 7ส</p>
-          </div>
-
-          <div className="admin-profile">
-            <div className="avatar">AD</div>
-            <div>
-              <strong>ผู้ดูแลระบบ</strong>
-              <small>Administrator</small>
-            </div>
-          </div>
-        </div>
-
-      </aside>
-
-      <section className="main-area">
-
-        <header className="topbar">
-          <div className="top-left">
-            <button
-              className="mobile-toggle"
-              onClick={() => setMobileMenu(true)}
-            >
-              <Menu/>
-            </button>
-
-            <span>7S Supervisor / <b>{active}</b></span>
-          </div>
-
-          <div className="top-right">
-            <span className="date">
-              <CalendarDays size={16}/>
-              12 พฤศจิกายน 2569
-            </span>
-
-            <button className="notification">
-              <Bell size={20}/>
-            </button>
-
-            <div className="avatar">AD</div>
-          </div>
-        </header>
-
-        <div className="content">
-
-          <div className="welcome">
-            <div>
-              <span className="eyebrow">ADMINISTRATION</span>
-              <h1>
-                {active === "ภาพรวมระบบ"
-                  ? "สวัสดี ผู้ดูแลระบบ 👋"
-                  : active}
-              </h1>
-              <p>ยินดีต้อนรับเข้าสู่ระบบจัดการงาน 7ส</p>
-            </div>
-
-            <button
-              className="primary-button"
-              onClick={() => setShowForm(true)}
-            >
-              <Plus size={18}/>
-              สร้างงานใหม่
-            </button>
-          </div>
-
-          <div className="stats">
-
-            <div className="stat-card">
-              <div className="stat-head">
-                <span>งานทั้งหมด</span>
-                <ClipboardList/>
-              </div>
-              <h2>{tasks.length + 20}</h2>
-              <small>รายการงานในระบบ</small>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-head">
-                <span>รอตรวจสอบ</span>
-                <Clock3/>
-              </div>
-              <h2>{waiting + 7}</h2>
-              <small>รอผู้ดูแลตรวจสอบ</small>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-head">
-                <span>อนุมัติแล้ว</span>
-                <CheckCircle2/>
-              </div>
-              <h2>{approved + 11}</h2>
-              <small>ผ่านการตรวจสอบ</small>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-head">
-                <span>ต้องแก้ไข</span>
-                <AlertCircle/>
-              </div>
-              <h2>{revision + 3}</h2>
-              <small>ส่งกลับเพื่อแก้ไข</small>
-            </div>
-
-          </div>
-
-          <div className="section-heading">
-            <div>
-              <h2>รายการงานล่าสุด</h2>
-              <p>ติดตามสถานะการดำเนินงาน</p>
-            </div>
-          </div>
-
-          <section className="task-box">
-
-            <div className="toolbar">
-              <div className="filters">
-                {[
-                  "ทั้งหมด",
-                  "รอตรวจ",
-                  "กำลังดำเนินการ",
-                  "อนุมัติแล้ว",
-                  "ต้องแก้ไข"
-                ].map(item => (
-                  <button
-                    key={item}
-                    className={filter === item ? "filter-active" : ""}
-                    onClick={() => setFilter(item)}
-                  >
-                    {item}
-                  </button>
-                ))}
-              </div>
-
-              <div className="search">
-                <Search size={17}/>
-                <input
-                  placeholder="ค้นหางาน..."
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="table-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    <th>ชื่องาน</th>
-                    <th>พื้นที่</th>
-                    <th>ผู้รับผิดชอบ</th>
-                    <th>สถานะ</th>
-                    <th></th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {filteredTasks.map(task => (
-                    <tr key={task.id}>
-                      <td>
-                        <strong>{task.title}</strong>
-                        <small>{task.id}</small>
-                      </td>
-
-                      <td>{task.area}</td>
-                      <td>{task.owner}</td>
-
-                      <td>
-                        <span className={
-                          "status " +
-                          (task.status === "อนุมัติแล้ว"
-                            ? "green"
-                            : task.status === "รอตรวจ"
-                            ? "orange"
-                            : task.status === "ต้องแก้ไข"
-                            ? "red"
-                            : "blue")
-                        }>
-                          {task.status}
-                        </span>
-                      </td>
-
-                      <td>
-                        <MoreHorizontal size={19}/>
-                      </td>
-                    </tr>
-                  ))}
-
-                  {filteredTasks.length === 0 && (
-                    <tr>
-                      <td colSpan={5}>ไม่พบรายการงาน</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="table-footer">
-              แสดง {filteredTasks.length} รายการ
-              <span>ข้อมูลตัวอย่าง</span>
-            </div>
-
-          </section>
-
-          <div className="bottom-grid">
-
-            <section className="info-card">
-              <h3>ความคืบหน้าการดำเนินงาน</h3>
-              <p>ภาพรวมการทำงานประจำเดือน</p>
-
-              <div className="progress-number">75%</div>
-
-              <div className="progress">
-                <div/>
-              </div>
-
-              <small>ความคืบหน้าโดยรวม</small>
-            </section>
-
-            <section className="info-card">
-              <h3>ทางลัดการทำงาน</h3>
-
-              <button onClick={() => setShowForm(true)}>
-                <Plus size={19}/>
-                มอบหมายงานใหม่
-              </button>
-
-              <button onClick={() => setActive("ตรวจสอบหลักฐาน")}>
-                <ClipboardCheck size={19}/>
-                ตรวจสอบหลักฐาน
-              </button>
-
-            </section>
-
-          </div>
-
-          <footer>
-            © 2026 7S Supervisor · ระบบจัดการงานความสะอาดตามหลัก 7ส
-          </footer>
-
-        </div>
-      </section>
-
-      {showForm && (
-        <div className="modal-overlay">
-          <form className="modal" onSubmit={addTask}>
-            <h2>สร้างงาน 7ส ใหม่</h2>
-
-            <label>ชื่องาน</label>
-            <input
-              required
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              placeholder="ระบุชื่องาน"
-            />
-
-            <label>พื้นที่รับผิดชอบ</label>
-            <input
-              required
-              value={area}
-              onChange={e => setArea(e.target.value)}
-              placeholder="ระบุพื้นที่"
-            />
-
-            <div className="modal-actions">
-              <button
-                type="button"
-                onClick={() => setShowForm(false)}
-              >
-                ยกเลิก
-              </button>
-
-              <button type="submit" className="save-button">
-                เพิ่มงาน
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-    </main>
-  );
-}
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'กำลังเข้าสู่ระบบ...';
+    try {
+      await login(staffId.value.trim(), password.value);
+      window.location.href = 'checklist.html'; // หน้าตรวจความสะอาด
+    } catch (err) {
+      showError('รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง ลองอีกครั้ง', password);
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'เข้าสู่ระบบ';
+    }
+  });
+</script>
+</body>
+</html>
